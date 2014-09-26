@@ -3,10 +3,9 @@ package modl
 import (
 	"bytes"
 	"fmt"
-	"reflect"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/jmoiron/sqlx/reflectx"
+	"reflect"
 )
 
 // TableMap represents a mapping between a Go struct and a database table
@@ -259,7 +258,12 @@ func (t *TableMap) bindInsert(elem reflect.Value) bindInstance {
 					s2.WriteString(t.dbmap.Dialect.AutoIncrBindValue())
 					plan.autoIncrIdx = y
 				} else {
-					s2.WriteString(t.dbmap.Dialect.BindVar(x))
+					if elem.FieldByName(col.fieldName).Kind() == reflect.Uint64 {
+						s2.WriteString(fmt.Sprintf("CAST(%s AS NUMERIC)", t.dbmap.Dialect.BindVar(x)))
+					} else {
+						s2.WriteString(t.dbmap.Dialect.BindVar(x))
+					}
+
 					if col == t.version {
 						plan.versField = col.fieldName
 						plan.argFields = append(plan.argFields, versFieldConst)

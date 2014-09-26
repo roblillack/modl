@@ -83,18 +83,26 @@ func (plan bindPlan) createBindInstance(elem reflect.Value) bindInstance {
 				elem.FieldByName(plan.versField).SetInt(int64(newVer))
 			}
 		} else {
-			val := elem.FieldByName(k).Interface()
-			bi.args = append(bi.args, val)
+			bi.args = append(bi.args, getFieldValue(elem, k))
 		}
 	}
 
 	for i := 0; i < len(plan.keyFields); i++ {
 		k := plan.keyFields[i]
-		val := elem.FieldByName(k).Interface()
-		bi.keys = append(bi.keys, val)
+		bi.keys = append(bi.keys, getFieldValue(elem, k))
 	}
 
 	return bi
+}
+
+func getFieldValue(elem reflect.Value, name string) interface{} {
+	val := elem.FieldByName(name).Interface()
+	u64, isUint64 := val.(uint64)
+	if !isUint64 {
+		return val
+	}
+	
+	return fmt.Sprintf("%d", u64)
 }
 
 type bindInstance struct {
